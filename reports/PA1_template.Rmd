@@ -1,0 +1,62 @@
+# Course Project 1
+***
+## Loading And Preprocessing The Data
+
+The loading and preprocessing of data belongs to the munging of data as per the ProjectTemplate structure. Data is loaded with read.csv(). We create a data frame, df_steps, from the csv. The code is saved in the /munge/01-A.R script, which is run every time we do load.project():
+
+```{r}
+load.project()
+dim(df_steps)
+head(df_steps)
+summary(df_steps)
+```
+
+## Mean Total Number of Steps Taken Per Day
+
+All of the necessary commands for this part are saved to the cp1_basic_processing.R-script in the src folder. A step-by-step development of the script is shown in the following. For this part, the missing values in the dataset are ignored.
+
+Total number of steps taken per day:
+```{r}
+load.project()
+df_steps %>% group_by(date) %>% summarise(sum=sum(steps))
+```
+
+Histogram of the total number of steps taken each day:
+```{r}
+load.project()
+dt_steps_per_day <- df_steps %>% group_by(date) %>% summarise(sum=sum(steps))
+hist(dt_steps_per_day$sum)
+
+```
+
+Mean and median of the total number of steps taken per day:
+
+## Average Daily Activity Pattern
+
+Time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis):
+
+5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps:
+
+## Imputing Missing Values
+
+The total number of missing values in the dataset (i.e. the total number of rows with NAs):
+
+A strategy for filling in all of the missing values in the dataset: The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+A new dataset that is equal to the original dataset, but with the missing data filled in:
+
+Histogram of the total number of steps taken each day:
+
+The mean and median total number of steps taken per day:
+
+Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+## Differences In Activity Patterns Between Weekdays And Weekends
+
+(For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.)
+
+New factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day:
+
+Panel plot containing a time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+(See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.)
