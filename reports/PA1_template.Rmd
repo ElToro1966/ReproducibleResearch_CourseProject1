@@ -1,62 +1,145 @@
 # Course Project 1
 ***
 ## Loading And Preprocessing The Data
+Frist, change working directory to the directory where the project has been downloaded / cloned:
 
-The loading and preprocessing of data belongs to the munging of data as per the ProjectTemplate structure. Data is loaded with read.csv(). We create a data frame, df_steps, from the csv. The code is saved in the /munge/01-A.R script, which is run every time we do load.project():
+setwd("~/Git/ReproducibleResearch_CourseProject1/")
 
-```{r}
+The loading and preprocessing of data belongs to the munging of data as per the ProjectTemplate structure, see also the READ.md in the root of the project direcotry. Data is loaded with read.csv(). We create a data frame, df_steps, from the csv. The code is saved in the /munge/01-A.R script, which is run every time we do load.project():
+
+```{r loading_and_preprocessing}
+library(ProjectTemplate)
 load.project()
 dim(df_steps)
 head(df_steps)
 summary(df_steps)
 ```
+*NOTE: The path in **setwd()** must be changed to the where you have checked out the project on your computer.
 
 ## Mean Total Number of Steps Taken Per Day
 
-All of the necessary commands for this part are saved to the cp1_basic_processing.R-script in the src folder. A step-by-step development of the script is shown in the following. For this part, the missing values in the dataset are ignored.
+All of the necessary commands for this part are saved to the cp1_basic_processing.R-script in the src folder. For this part, the missing values in the dataset are ignored.
 
 Total number of steps taken per day:
-```{r}
-load.project()
+```{r clculating_steps_pel.par_day}
 df_steps %>% group_by(date) %>% summarise(sum=sum(steps))
 ```
 
 Histogram of the total number of steps taken each day:
-```{r}
-load.project()
-dt_steps_per_day <- df_steps %>% group_by(date) %>% summarise(sum=sum(steps))
-hist(dt_steps_per_day$sum)
+```{r histogram_steps_per_day}
+dt_steps_per_day <- df_steps %>% group_by(date) %>%
+    summarise(sum=sum(steps))
+hist(dt_steps_per_day$sum, 
+    xlab="Total number of steps per day",
+    main = "Histogram of total number of steps per day")
+dev.print(png, 
+    'figure/histogram_sum_steps_per_day.png',
+    width=640,
+    height=800)
 
 ```
 
 Mean and median of the total number of steps taken per day:
+```{r mean_median_steps_per_day}
+mean(dt_steps_per_day$sum,na.rm=TRUE)
+median(dt_steps_per_day$sum,na.rm=TRUE)
+```
 
 ## Average Daily Activity Pattern
 
 Time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis):
+```{r average_steps_per_interval}
+dt_average_steps_per_interval <- df_steps %>%
+    group_by(interval) %>%
+    summarise(mean=mean(steps, na.rm=TRUE))
+
+plot(dt_average_steps_per_interval$interval,
+    dt_average_steps_per_interval$mean,
+    type="l",
+    xlab="Interval",
+    ylab="Average number of steps",
+    main="Average Number of Steps Per Interval")
+dev.print(png, 
+    'figure/lineplot_average_steps_per_interval.png',
+    width=640,
+    height=800)
+```
 
 5-minute interval, on average across all the days in the dataset, that contains the maximum number of steps:
+```{r average_interval_w_maximum_steps}
+which.max(dt_average_steps_per_interval$mean)
+```
 
 ## Imputing Missing Values
 
 The total number of missing values in the dataset (i.e. the total number of rows with NAs):
+```{r total_NAs}
+sapply(df_steps, function(x) sum(is.na(x)))
+```
 
-A strategy for filling in all of the missing values in the dataset: The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
-
-A new dataset that is equal to the original dataset, but with the missing data filled in:
+The chosen strategy for filling in all of the missing values in the dataset is to use mean for that 5-minute interval. A new dataset that is equal to the original dataset, but with the missing data filled in:
+```{r imputing_steps}
+y <- which(is.na(df_steps$steps)==TRUE) 
+df_steps_imputed <- merge(df_steps,dt_average_steps_per_interval,by="interval")
+df_steps_imputed$steps <- with(df_steps_imputed,impute(steps,mean[y]))
+```
 
 Histogram of the total number of steps taken each day:
+```{r histogram_of_imputed_steps}
+dt_steps_per_day_imputed <- df_steps_imputed %>% group_by(date) %>%
+    summarise(sum=sum(steps))
+hist(dt_steps_per_day_imputed$sum, 
+    xlab="Total number of steps per day",
+    main = "Histogram of total number of steps per day")
+dev.print(png, 
+    'figure/histogram_sum_steps_per_day_imputed.png',
+    width=640,
+    height=800)
+```
 
 The mean and median total number of steps taken per day:
-
-Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```{r mean_median_imputed_steps}
+mean(dt_steps_per_day_imputed$sum)
+median(dt_steps_per_day_imputed$sum)
+```
+These values are higher than the estimates from the first part of the assignment. Thus, the impact of imputing missing data on the estimates of the total daily number of steps is increased values.
 
 ## Differences In Activity Patterns Between Weekdays And Weekends
 
-(For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.)
-
 New factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day:
+```{r categorizing_days}
+source("src/cp1_function_daytype.R")
+df_steps_imputed$daytype <- apply(df_steps_imputed,1,
+    function(x) daytype(x[3]))
+```
 
 Panel plot containing a time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+```{r interval_by_day_type}
+df_weekday <- subset(df_steps_imputed,daytype=="weekday")
+df_weekend <- subset(df_steps_imputed,daytype=="weekend")
+dt_steps_per_day_weekday <- df_weekday %>% group_by(interval) %>%
+    summarise(mean=mean(steps))
+dt_steps_per_day_weekend <- df_weekend %>% group_by(interval) %>%
+    summarise(mean=mean(steps))
 
-(See the README file in the GitHub repository to see an example of what this plot should look like using simulated data.)
+par(mfrow=c(2,1))
+
+plot(dt_steps_per_day_weekday$interval,
+    dt_steps_per_day_weekday$mean,
+    type="l",
+    xlab="Interval",
+    ylab="Average number of steps (weekdays)",
+    main="Average Number of Steps Per Interval On Weekdays")
+
+plot(dt_steps_per_day_weekend$interval,
+    dt_steps_per_day_weekend$mean,
+    type="l",
+    xlab="Interval",
+    ylab="Average number of steps (weekends)",
+    main="Average Number of Steps Per Interval On Weekends")
+dev.print(png, 
+    'figure/multipanelplot_steps_weekdays_weekends.png',
+    width=640,
+    height=800)
+```
+
